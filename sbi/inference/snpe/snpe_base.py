@@ -216,7 +216,9 @@ class PosteriorEstimator(NeuralInference, ABC):
         show_train_summary: bool = False,
         optimizer: Optional[Callable] = None, 
         scheduler: Optional[Callable] = None, 
-        dataloader_kwargs: Optional[dict] = None,
+        scheduler_args: Optional = None, 
+        scheduler_kwargs: Optional[dict] = None, 
+        dataloader_kwargs: Optional[dict] = {},
     ) -> nn.Module:
         r"""Return density estimator that approximates the distribution $p(\theta|x)$.
 
@@ -325,16 +327,19 @@ class PosteriorEstimator(NeuralInference, ABC):
         # Move entire net to device for training.
         self._neural_net.to(self._device)
 
-        if not resume_training and optimizer is None:
-            self.optimizer = optim.Adam(
-                list(self._neural_net.parameters()), lr=learning_rate
-            )
+        if not resume_training:
+            if optimizer is None:
+                self.optimizer = optim.Adam(
+                        list(self._neural_net.parameters()), lr=learning_rate
+                        )
+            else: 
+                self.optimizer = optimizer(
+                        list(self._neural_net.parameters()), lr=learning_rate
+                        )
             self.epoch, self._val_log_prob = 0, float("-Inf")
         
-        if optimizer is not None: 
-            self.optimizer = optimizer 
         if scheduler is not None: 
-            self.scheduler = scheduler
+            self.scheduler = scheduler(self.optimizer, *scheduler_args, **scheduler_kwargs)
 
         while self.epoch <= max_num_epochs and not self._converged(
             self.epoch, stop_after_epochs

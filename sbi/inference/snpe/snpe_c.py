@@ -99,6 +99,10 @@ class SNPE_C(PosteriorEstimator):
         use_combined_loss: bool = False,
         retrain_from_scratch: bool = False,
         show_train_summary: bool = False,
+        optimizer: Optional[Callable] = None, 
+        scheduler: Optional[Callable] = None, 
+        scheduler_args: Optional = None, 
+        scheduler_kwargs: Optional[dict] = {}, 
         dataloader_kwargs: Optional[Dict] = None,
     ) -> nn.Module:
         r"""Return density estimator that approximates the distribution $p(\theta|x)$.
