@@ -378,7 +378,6 @@ class PosteriorEstimator(NeuralInference, ABC):
                 if scheduler is not None: 
                     self.scheduler.step()
 
-
             self.epoch += 1
 
             train_log_prob_average = train_log_probs_sum / (
