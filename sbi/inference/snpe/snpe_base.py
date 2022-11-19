@@ -214,6 +214,8 @@ class PosteriorEstimator(NeuralInference, ABC):
         discard_prior_samples: bool = False,
         retrain_from_scratch: bool = False,
         show_train_summary: bool = False,
+        optimizer: Optional[Callable] = None, 
+        scheduler: Optional[Callable] = None, 
         dataloader_kwargs: Optional[dict] = None,
     ) -> nn.Module:
         r"""Return density estimator that approximates the distribution $p(\theta|x)$.
@@ -323,11 +325,16 @@ class PosteriorEstimator(NeuralInference, ABC):
         # Move entire net to device for training.
         self._neural_net.to(self._device)
 
-        if not resume_training:
+        if not resume_training and optimizer is None:
             self.optimizer = optim.Adam(
                 list(self._neural_net.parameters()), lr=learning_rate
             )
             self.epoch, self._val_log_prob = 0, float("-Inf")
+        
+        if optimizer is not None: 
+            self.optimizer = optimizer 
+        if scheduler is not None: 
+            self.scheduler = scheduler
 
         while self.epoch <= max_num_epochs and not self._converged(
             self.epoch, stop_after_epochs
@@ -363,6 +370,9 @@ class PosteriorEstimator(NeuralInference, ABC):
                         self._neural_net.parameters(), max_norm=clip_max_norm
                     )
                 self.optimizer.step()
+                if scheduler is not None: 
+                    self.scheduler.step()
+
 
             self.epoch += 1
 
